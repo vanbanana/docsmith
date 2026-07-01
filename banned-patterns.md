@@ -140,8 +140,82 @@ Pattern: Every section starts with "What is X?" or "How does X work?"
 Fix: Start with the answer. "X is a caching layer that stores..."
 
 **Over-Listification**
-Pattern: Everything in bullet points. No narrative prose.
-Fix: Complex ideas need paragraphs. Lists are for sequential steps or simple comparisons.
+Pattern: Everything in bullet points. No narrative prose. AI defaults to lists for almost all content — explanations, comparisons, steps, even conceptual overviews get turned into bullets.
+Problem: Lists fragment ideas into disconnected fragments. They strip context, causality, and nuance. Complex concepts need connected reasoning to explain WHY and HOW things relate.
+Fix: See the detailed decision guide below.
+
+### List vs Prose vs Table — Decision Guide
+
+The core question: what is the information structure? Use this table to decide:
+
+| Information Structure | Format | Why | Example |
+|---|---|---|---|
+| Sequential steps (do A, then B, then C) | Numbered list | Order matters, each step is atomic | "1. Clone repo 2. Install deps 3. Start server" |
+| Parallel options (pick one of N) | Bulleted list | Items are independent choices | "You can deploy via Docker, VM, or serverless" |
+| Comparing attributes across options | Table | Cross-referencing is the core task | Comparing 3 database options across 5 criteria |
+| Explaining WHY something works or was chosen | Prose paragraph | Causality needs connected reasoning | "We chose Redis because the read pattern is..." |
+| Explaining HOW a complex system behaves | Prose paragraph | Interaction between parts needs narrative | "When a user submits a form, the client validates..." |
+| Defining terms or mapping concepts | Definition list or table | Key-value pairs | "API: the contract between frontend and backend" |
+| Enumerating constraints or requirements | Bulleted list | Each item is a standalone constraint | "Must support HTTPS, rate limiting, and CORS" |
+| Describing a decision with trade-offs | Prose paragraph | Trade-off analysis is inherently narrative | "Option A gives speed but loses observability..." |
+| Showing before/after or bad/good | Side-by-side code block | Visual comparison is more effective than listing | Code diff or two code blocks labeled "Before" and "After" |
+| Status or progress tracking | Table | Need multiple dimensions per item | Tasks with owner, status, deadline columns |
+
+**Rules for when to use lists:**
+- Bulleted list: 3-7 items, each item is a standalone fact, no cross-item dependency
+- Numbered list: strict sequential order, each step depends on the previous
+- If your list has 10+ items, it probably needs to be a table or reorganized into sections
+
+**Rules for when to use prose:**
+- You're explaining causality ("because X, therefore Y")
+- You're comparing trade-offs that need context
+- You're telling the story of a system's behavior
+- The reader needs to understand HOW parts interact, not just WHAT parts exist
+
+**Rules for when to use tables:**
+- Two or more dimensions of data (rows × columns)
+- The reader will cross-reference (looking at one option, comparing across attributes)
+- Parameter lists, configuration options, comparison matrices
+
+**AI's default failure mode:** AI converts everything to bullet lists because lists are statistically "safe" — they don't require paragraph-level reasoning. If you catch yourself writing a 5-item bullet list explaining WHY something works, stop. Write a paragraph instead.
+
+### ASCII Art Diagrams — Banned
+
+Pattern: Using box-drawing characters (`┌─────┐ │ ─ └ ┘`) or text-based art for architecture diagrams, flowcharts, or system layouts.
+
+```
+┌─────────┐     ┌─────────┐     ┌─────────┐
+│ Frontend │────▶│   API   │────▶│Database │
+└─────────┘     └─────────┘     └─────────┘
+```
+
+Problem:
+- Not renderable — looks different in every font, editor, terminal width
+- Not maintainable — moving a box means rewriting dozens of characters
+- Not interactive — can't click, zoom, or navigate
+- Not searchable — diagram content is invisible to text search
+- Not accessible — screen readers can't interpret it
+- Breaks in Markdown renderers — monospace blocks don't preserve alignment on narrow screens
+
+Fix: Use Mermaid diagrams instead. The same architecture:
+
+```mermaid
+graph LR
+    Frontend --> API --> Database
+```
+
+**The only acceptable use of ASCII diagrams:** showing raw terminal output or file structure trees where the monospace formatting is the content itself:
+
+```
+project/
+├── src/
+│   ├── components/
+│   └── utils/
+├── tests/
+└── package.json
+```
+
+This is a directory tree, not a diagram. It's acceptable because the tree structure IS the data.
 
 ---
 

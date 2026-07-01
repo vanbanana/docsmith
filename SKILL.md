@@ -106,19 +106,149 @@ Write section by section. Follow the core writing principles. Before drafting, r
 
 ### Step 4 — VISUALIZE
 
-Insert diagrams and tables at marked positions.
+Insert diagrams and tables at marked positions. Never use ASCII art diagrams (box-drawing characters like `┌──┐`) — use Mermaid instead. Directory trees are the only exception.
 
-| Visual Type | Use When | Format |
+#### Diagram Selection Decision Tree
+
+```
+What are you showing?
+│
+├─ Parts of a system and how they connect
+│  ├─ High-level overview (3-10 components) → graph TD or graph LR
+│  └─ Detailed with protocols/data formats → graph TD with edge labels
+│
+├─ A process with time ordering
+│  ├─ Actors exchanging messages → sequenceDiagram
+│  ├─ Single actor with branching decisions → flowchart
+│  └─ Parallel processes → sequenceDiagram with par blocks
+│
+├─ Entity relationships and data model
+│  ├─ Database schema → erDiagram
+│  └─ Code structure (classes, interfaces) → classDiagram
+│
+├─ State changes over time
+│  ├─ Entity lifecycle (draft → review → published) → stateDiagram-v2
+│  └─ Project timeline → gantt
+│
+├─ Comparing options or attributes
+│  ├─ 2+ dimensions (rows × columns) → Markdown table
+│  └─ Pros/cons for 2 options → Prose paragraph (not a table)
+│
+├─ Decision logic or branching rules
+│  └─ flowchart (diamond nodes for decisions)
+│
+└─ Critical warning, tip, or note
+   └─ Callout box (> **Warning:** text)
+```
+
+#### Diagram Type Reference
+
+**Architecture / Component Diagram** — `mermaid graph TD` or `graph LR`
+Use when: showing system components and their connections.
+
+```mermaid
+graph TD
+    Client -->|HTTPS| Gateway
+    Gateway --> AuthService
+    Gateway --> OrderService
+    OrderService --> Database[(PostgreSQL)]
+    OrderService --> Cache[(Redis)]
+```
+
+Tip: Use `TD` (top-down) for layered architectures, `LR` (left-right) for pipelines or sequential flows. Add edge labels (`-->|label|`) to show protocols or data formats.
+
+**Sequence Diagram** — `mermaid sequenceDiagram`
+Use when: showing message exchange between actors over time. Request/response flows, API call chains, event-driven interactions.
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant G as API Gateway
+    participant S as Service
+    participant D as Database
+    C->>G: POST /orders (JWT)
+    G->>S: createOrder(payload)
+    S->>D: INSERT INTO orders
+    D-->>S: order_id
+    S-->>G: 201 Created
+    G-->>C: 201 + Location header
+```
+
+Tip: Use `->>` for synchronous calls, `--)` for async events, `-->>` for responses. Group related messages with `rect rgb(200,220,255)` blocks.
+
+**Flowchart** — `mermaid flowchart`
+Use when: showing decision trees, branching workflows, conditional logic. NOT for architecture overviews (use graph instead).
+
+```mermaid
+flowchart TD
+    A[Receive request] --> B{Authenticated?}
+    B -->|Yes| C{Has permission?}
+    B -->|No| D[Return 401]
+    C -->|Yes| E[Process request]
+    C -->|No| F[Return 403]
+```
+
+Tip: Use diamond `{}` for decisions, rounded `()` for processes, `([])` for terminal states. Keep each flowchart under 15 nodes — split into sub-diagrams if larger.
+
+**State Diagram** — `mermaid stateDiagram-v2`
+Use when: showing entity lifecycle or status transitions. Order states, task statuses, document approval flows.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Draft
+    Draft --> Review : submit
+    Review --> Published : approve
+    Review --> Draft : request_changes
+    Published --> Archived : after_30d
+    Archived --> [*]
+```
+
+**ER Diagram** — `mermaid erDiagram`
+Use when: showing database schema, entity relationships, cardinality.
+
+```mermaid
+erDiagram
+    USER ||--o{ ORDER : places
+    ORDER ||--|{ LINE_ITEM : contains
+    PRODUCT ||--o{ LINE_ITEM : "ordered in"
+    USER {
+        uuid id PK
+        string email
+        datetime created_at
+    }
+```
+
+**Class Diagram** — `mermaid classDiagram`
+Use when: showing code structure — modules, classes, interfaces, inheritance. NOT for runtime architecture (use graph instead).
+
+**Gantt Chart** — `mermaid gantt`
+Use when: showing project timelines, sprint schedules, deployment windows. NOT for state transitions (use stateDiagram instead).
+
+#### Table vs Diagram Decision
+
+| Situation | Use Table | Use Diagram |
 |---|---|---|
-| Architecture diagram | Components + connections | `mermaid graph TD` or `graph LR` |
-| Sequence diagram | Request/response flows | `mermaid sequenceDiagram` |
-| Flowchart | Decision trees, workflows | `mermaid flowchart` |
-| State diagram | Entity lifecycle | `mermaid stateDiagram-v2` |
-| ER diagram | Database schema | `mermaid erDiagram` |
-| Comparison table | Options, features, params | Markdown table |
-| Gantt chart | Timelines, schedules | `mermaid gantt` |
+| Comparing 3+ options on 3+ attributes | Yes | No |
+| Listing config parameters | Yes | No |
+| Showing how components connect | No | Yes |
+| Showing a time-ordered process | No | Yes |
+| Showing entity relationships | No (unless <4 entities, 1-2 attrs) | Yes |
+| Showing decision branching logic | No | Yes |
+| Parameter reference (name, type, default) | Yes | No |
 
-Every visual must have a caption and be referenced in surrounding text.
+#### Callout Boxes
+
+Use for critical information that MUST NOT be missed. Not for every paragraph.
+
+```markdown
+> **Warning:** Deleting this table is irreversible. Run a backup first.
+
+> **Tip:** You can skip this step if you're using the default configuration.
+
+> **Note:** This endpoint is rate-limited to 100 requests per minute.
+```
+
+Rules: max 2 callouts per section. If you need more, the section needs restructuring.
 
 ### Step 5 — RED-TEAM VERIFY
 
